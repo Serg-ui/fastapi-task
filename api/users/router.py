@@ -63,7 +63,7 @@ def create_user(new_user: CreateUserScheme, db: Session = Depends(get_db)):
 
 
 @router.post(path='/search')
-def search_user(data: SearchUserScheme, db: Session = Depends(get_db)):
+def search_users(data: SearchUserScheme, db: Session = Depends(get_db)):
     data = {k: v for k, v in data.dict().items() if v}
 
     if not data:
