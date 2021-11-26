@@ -20,7 +20,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     try:
         user = db.query(User.id, User.first_name, User.last_name, User.e_mail).filter_by(id=user_id).one()
     except NoResultFound:
-        raise HTTPException(404, "Такого юзера нет")
+        return {'error': 'Несуществующий id'}
     return user
 
 
@@ -33,14 +33,18 @@ def update_user(data: UpdateUserScheme, db: Session = Depends(get_db)):
     try:
         user = db.query(User).filter_by(id=user_id).one()
     except NoResultFound:
-        raise HTTPException(404, "Такого юзера нет")
+        return {'error': 'Несуществующий id'}
 
     data = {k: v for k, v in data.items() if v}
 
     for key, value in data.items():
         setattr(user, key, value)
 
-    db.commit()
+    try:
+        db.commit()
+        return {'res': 'Данные успешно изменены'}
+    except IntegrityError:
+        return {'error': 'Такой email уже существует'}
 
 
 @router.post(path='/')
@@ -76,3 +80,14 @@ def search_user(data: SearchUserScheme, db: Session = Depends(get_db)):
 
     res = users.all()
     return res
+
+
+@router.delete(path='/')
+def delete_user(id: int, db: Session = Depends(get_db)):
+    try:
+        user = db.query(User).filter_by(id=id).one()
+        db.delete(user)
+        db.commit()
+    except NoResultFound:
+        return {'error': 'Несуществующий id'}
+    return {'res': 'Пользователь удален'}
