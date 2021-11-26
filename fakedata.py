@@ -2,7 +2,7 @@ from faker import Faker
 
 from db.base import SessionLocal
 from db.models.user import User
-
+from hashlib import sha256
 
 def fake_users():
     Faker.seed(0)
@@ -11,9 +11,11 @@ def fake_users():
     users = []
     for _ in range(50):
         users.append(User(
-            name=fake.name(),
-            phone=fake.phone_number(),
-            e_mail=fake.ascii_company_email()
+            first_name=fake.name(),
+            last_name=fake.name(),
+            third_name=fake.name(),
+            e_mail=fake.ascii_company_email(),
+            password=sha256(fake.name().encode('utf-8')).hexdigest()
         ))
 
     return users
