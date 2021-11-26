@@ -5,8 +5,11 @@ from hashlib import sha256
 from utils import get_db
 from db.models.user import User
 from api.users.schemas import CreateUserScheme, UpdateUserScheme, SearchUserScheme
+from sqlalchemy import inspect
 
 router = APIRouter()
+
+user_attrs = [c_attr.key for c_attr in inspect(User).mapper.column_attrs]
 
 
 @router.get(path='/all')
@@ -38,7 +41,8 @@ def update_user(data: UpdateUserScheme, db: Session = Depends(get_db)):
     data = {k: v for k, v in data.items() if v}
 
     for key, value in data.items():
-        setattr(user, key, value)
+        if key in user_attrs:
+            setattr(user, key, value)
 
     try:
         db.commit()
@@ -72,11 +76,10 @@ def search_users(data: SearchUserScheme, db: Session = Depends(get_db)):
     users = db.query(User)
 
     for key, value in data.items():
-        if key.startswith('_'):
-            continue
 
-        column = getattr(User, key)
-        users = users.filter(column.like(f'%{value}%'))
+        if key in user_attrs:
+            column = getattr(User, key)
+            users = users.filter(column.like(f'%{value}%'))
 
     res = users.all()
     return res
